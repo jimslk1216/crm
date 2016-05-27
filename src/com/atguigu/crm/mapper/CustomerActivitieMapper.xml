@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.crm.mapper.CustomerActivitieMapper">
+	<insert id="save">
+		INSERT INTO
+		customer_activities(id,activity_date,description,place,title,customer_id)
+		values(crm_seq.nextval,#{ca.date},#{ca.description},#{ca.place},#{ca.title},#{ca.customer.id})
+	</insert>
+
+	<!-- 获取分页总数 -->
+	<select id="getTotalElements" resultType="int">
+		SELECT count(*)
+		FROM
+		customer_activities
+		WHERE customer_id=#{id}
+	</select>
+
+	<!-- 获取交往记录 -->
+	<select id="getPage" resultType="com.atguigu.crm.bean.CustomerActivity">
+		SELECT * FROM(
+		SELECT rownum
+		rn,id,activity_date as"date"
+		,description,place,title
+		FROM customer_activities
+		where
+		customer_id=#{id}
+		)
+		WHERE
+		<![CDATA[rn>=#{firstIndex} AND rn<#{endIndex}]]>
+
+
+	</select>
+	<!-- 通过id获取某个用户信息 -->
+	<select id="getCustomer" resultType="com.atguigu.crm.bean.Customer">
+		SELECT id, no,name
+		FROM
+		customers
+		WHERE id=#{id}
+	</select>
+
+	<!-- 通过Id获取一条交往记录 -->
+
+	<select id="getById" resultType="com.atguigu.crm.bean.CustomerActivity">
+		SELECT
+		id,activity_date as
+		"date",description,place,title,customer_id as"customer.id"
+		FROM
+		customer_activities
+		WHERE id=#{id}
+	</select>
+
+	<update id="update">
+
+		UPDATE customer_activities set
+		activity_date=#{ca.date},description=#{ca.description},
+		place=#{ca.place},title=#{ca.title}
+		WHERE id=#{ca.id}
+
+	</update>
+	<delete id="delete">
+		DELETE FROM customer_activities where id=#{id} 
+	</delete>
+	
+</mapper>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.crm.mapper.CustomerMapper">
+	<!-- 获取下拉城市选项 -->
+	<select id="getDicts" resultType="java.lang.String">
+		SELECT item FROM dicts
+		WHERE
+		type=#{type}
+	</select>
+	<!-- 获取分页数据 -->
+	<select id="getContent" resultType="com.atguigu.crm.bean.Customer">
+		SELECT * FROM(
+		SELECT rownum rn,cu.id,cu.no,cu.name,cu.region,con.name
+		as
+		"manager.name",cu.customer_level
+		as"level",cu.state
+		FROM customers cu
+		LEFT OUTER JOIN contacts con
+		ON
+		cu.manager_id = con.id
+		<include refid="queryParam" />
+		)
+		<![CDATA[
+		WHERE rn >= #{firstIndex} AND rn <#{endIndex}
+		]]>
+
+
+	</select>
+	<!-- 获取分页总数 -->
+	<select id="getTotalElements" resultType="int">
+		SELECT count(*)
+		FROM customers cu
+		LEFT OUTER JOIN contacts con
+		ON
+		cu.manager_id = con.id
+		<include refid="queryParam" />
+	</select>
+
+	<!-- 客户开发成功，保存客户信息 -->
+	<insert id="saveCust">
+		INSERT INTO customers(id,name,no,state)
+		VALUES(crm_seq.nextval,#{cus.name},#{cus.no},#{cus.state})
+	</insert>
+	<!-- 客服开发成功调用No -->
+	<select id="getById" resultType="long">
+
+		SELECT id FROM customers
+		WHERE
+		no= #{no}
+
+	</select>
+
+	<!-- 添加条件查询语句 -->
+	<sql id="queryParam">
+		<where>
+			<if test="region!=null and region!=''">
+				AND region =#{region}
+			</if>
+			<if test="name!=null and name!=''">
+				AND cu.name LIKE #{name}
+			</if>
+			<if test="managerName!=null and managerName!=''">
+				AND con.name LIKE #{managerName}
+			</if>
+			<if test="level!=null and level!=''">
+				AND cu.customer_level = #{level}
+			</if>
+			<if test="state!=null and state!=''">
+				AND cu.state = #{state}
+			</if>
+		</where>
+	</sql>
+
+</mapper>

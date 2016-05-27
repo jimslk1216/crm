@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.crm.mapper.SalesPlanMapper">
+	
+	<!-- 通过id保存结果 -->
+	<update id="saveResult">
+		update sales_plan
+		set plan_result=#{result}
+		where id=#{id}
+	</update>
+	
+	<!-- 通过id删除指定的计划 -->
+	<delete id="deletePlan">
+		delete from sales_plan
+		where id=#{id}
+	</delete>
+	
+	
+	<!-- 更新计划信息 -->
+	<update id="updatePlan">
+		update  sales_plan
+		set todo=#{todo}  
+		where id=#{id}
+	</update>
+	
+	
+	<!-- 保存新建计划的信息 -->
+	<insert id="savePlan" >
+		insert into sales_plan(id,plan_date,plan_result,todo,chance_id) 
+		values(1000,#{date},#{result},#{todo},#{chanceId})
+		
+	
+	</insert>
+	
+	<!-- 指派人 -->
+	<resultMap type="com.atguigu.crm.bean.User" id="designeeMap">
+		<id column="designee_id" property="id"/>
+		<result column="designee.name" property="name"/>
+	</resultMap>
+	<!-- 创建人的映射 -->
+	<resultMap type="com.atguigu.crm.bean.User" id="createByMap">
+		<id column="created_user_id" property="id"/>
+		<result column="createBy.name" property="name" />
+	</resultMap>
+	
+	<!-- salesPlan集合 -->
+	<resultMap type="com.atguigu.crm.bean.SalesPlan" id="salesPlanMap">
+		<id column="spId" property="id"/>
+		<result column="result" property="result"/>
+		<result column="date" property="date"/>
+		<result column="todo" property="todo"/>
+	</resultMap>
+
+	<resultMap type="com.atguigu.crm.bean.SalesChance" id="salesChanceMap">
+		<id column="id" property="id"/>
+		<result column="contact" property="contact"/>
+		<result column="contact_tel"  property="contactTel"/>
+		
+		<result column="create_date" property="createDate"/>
+		<result column="cust_name" property="custName"/>
+		<result column="description" property="description"/>
+		<result column="designee_date" property="designeeDate"/>
+		<result column="rate" property="rate"/>
+		<result column="source" property="source"/>
+		<result column="status" property="status"/>
+		<result column="title" property="title"/>
+		<association property="designee" resultMap="designeeMap"></association>
+		<association property="createBy" resultMap="createByMap"/>
+		<collection property="salesPlans"
+			ofType="com.atguigu.crm.bean.SalesPlan"
+			resultMap="salesPlanMap"></collection>		
+	</resultMap>
+	
+	
+	<!-- 新建客户开发计划时，查询销售机会信息机器关联的创建人和指派人的name属性 -->
+	<select id="getById"  resultMap="salesChanceMap">
+		SELECT s.id, s.contact, s.contact_tel, s.create_date, s.cust_name, s.description, s.designee_date, s.rate, s.source, 
+		s.status, s.title , s.created_user_id as "createBy.id", c.name as "createBy.name", s.designee_id as "designee.id",
+		 d.name as "designee.name", sp.id as "spId", sp.plan_result as "result", sp.plan_date as "date", sp.todo as "todo"
+		FROM sales_chances s
+		LEFT OUTER JOIN users c
+		ON s.created_user_id = c.id
+		LEFT OUTER JOIN users d
+		ON s.designee_id = d.id
+		LEFT OUTER JOIN sales_plan sp
+		ON s.id = sp.chance_id
+		WHERE s.id=#{id}
+	</select>
+	
+	
+	
+	<select id="getContent" resultType="com.atguigu.crm.bean.SalesChance">
+		SELECT *
+		FROM (
+		SELECT rownum rn,id ,cust_name ,title , contact ,status,
+		contact_tel ,create_date
+		FROM sales_chances
+		WHERE status != 1 and designee_id=#{userId}
+		)
+		<![CDATA[
+		WHERE rn >= #{firstIndex} AND rn <#{endIndex}
+		]]>
+
+	</select>
+	
+	<!-- get the totalElements -->
+	<select id="getTotalElements" resultType="long">
+		SELECT COUNT(id) FROM
+		sales_chances WHERE status != 1
+	</select>
+
+</mapper>

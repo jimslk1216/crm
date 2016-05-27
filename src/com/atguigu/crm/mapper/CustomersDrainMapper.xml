@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.crm.mapper.CustomersDrainMapper">
+	<sql id="queryE">
+		<where>
+			<if test="customer_manager_name!=null and customer_manager_name!=''">
+				AND con.name LIKE #{customer_manager_name}
+			</if>
+			<if test="customer_name!=null and customer_name !=''">
+				AND c.name LIKE #{customer_name}
+			</if>
+		</where>
+	</sql>
+	<!-- 获取分页总数 -->
+	<select id="getTotalElements" resultType="int">
+		SELECT count(*)
+		FROM customer_drains cd
+		LEFT OUTER JOIN
+		customers c
+		ON
+		cd.customer_id=c.id
+		LEFT OUTER JOIN contacts con
+		ON
+		c.manager_id=con.id
+		<include refid="queryE" />
+	</select>
+	<!-- 获取分页 -->
+	<select id="getPage" resultType="com.atguigu.crm.bean.CustomerDrain">
+		SELECT * FROM(
+		SELECT rownum rn, cd.id,c.name as"customer.name",con.name as
+			"customer.manager.name",
+			cd.last_order_date,cd.drain_date,cd.reason,cd.status
+		FROM
+			customer_drains cd
+		LEFT OUTER JOIN
+			customers c
+		ON
+			cd.customer_id=c.id
+		LEFT
+			OUTER JOIN contacts con
+		ON
+			c.manager_id=con.id
+		<include refid="queryE" />
+		)
+		 <![CDATA[
+		WHERE rn >=#{firstIndex} and rn<#{endIndex}
+		]]>
+		
+	</select>
+	<select id="getById" resultType="com.atguigu.crm.bean.CustomerDrain">
+		SELECT cd.id,cd.delay,c.name
+		as"customer.name",con.name as "customer.manager.name",
+		cd.last_order_date,cd.drain_date,cd.reason,cd.status
+		FROM
+		customer_drains cd
+		LEFT OUTER JOIN
+		customers c
+		ON
+		cd.customer_id=c.id
+		LEFT
+		OUTER JOIN contacts con
+		ON
+		c.manager_id=con.id
+		WHERE cd.id=#{id}
+	</select>
+
+	<update id="delay">
+
+		UPDATE customer_drains set delay=delay||'`'||#{text}
+		WHERE id=#{id}
+
+	</update>
+	<!-- 确认流失 -->
+	<update id="updeteCus">
+		<selectKey keyProperty="idss" order="BEFORE" resultType="int">
+			SELECT customer_id FROM customer_drains WHERE id=#{ids}
+		</selectKey>
+		UPDATE customers set state='流失' WHERE id=#{idss}
+	</update>
+	<update id="updetecd">
+		UPDATE customer_drains SET
+		drain_date=#{drainDate},reason=#{reason},status='流失'
+		WHERE id = #{id}
+	</update>
+</mapper>
+

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.atguigu.crm.mapper.StorageMapper">
+
+	<delete id="delete">
+		DELETE storages WHERE id=#{id}
+	</delete>
+
+	<!-- 更新操作 -->
+	<update id="update">
+		UPDATE storages
+		set stock_count=#{s.stockCount}
+		WHERE
+		id=${s.id}
+	</update>
+	<!-- 通过ｉｄ获取对象 -->
+	<select id="getById" resultType="com.atguigu.crm.bean.Storage">
+		SELECT
+		s.id,s.memo,s.stock_count,s.stock_ware,s.ware_house,p.name as
+		"product.name"
+		FROM storages s
+		LEFT OUTER JOIN products p
+		ON
+		s.product_id=p.id
+		WHERE s.id=#{id}
+	</select>
+
+	<!-- 添加保存库存 -->
+	<insert id="save">
+		INSERT INTO
+		storages(id,memo,stock_count,stock_ware,ware_house,product_id)
+		values(crm_seq.nextval,#{s.memo},#{s.stockCount},#{s.stockWare},#{s.wareHouse},#{s.product.id})
+	</insert>
+	<!-- 获取所有产品信息 -->
+	<select id="getProducts" resultType="com.atguigu.crm.bean.Product">
+		SELECT id,name
+		FROM products
+	</select>
+	<sql id="queryCondition">
+		<where>
+			<if test="productName != null and productName != ''">AND pro.name LIKE #{productName} </if>
+			<if test="wareHouse != null and wareHouse !=''"> AND ware_house LIKE #{wareHouse} </if>
+		</where>
+	</sql>
+	<!-- 条件查询分页 -->
+	<select id="getList" resultType="com.atguigu.crm.bean.Storage">
+
+		SELECT * FROM(
+		SELECT rownum rn,s.id,pro.name as
+		"product.name",s.ware_house ,stock_count,stock_ware,s.memo
+		FROM
+		storages s
+		LEFT
+		OUTER JOIN products pro
+		ON
+		s.product_id = pro.id
+		<include refid="queryCondition" />)
+		<![CDATA[
+		WHERE rn>=#{firstIndex} AND rn<#{endIndex}
+		]]>
+	</select>
+
+	<!-- 获取条件查询总数 -->
+	<select id="getTotalElements" resultType="int">
+		SELECT count(*)
+		FROM storages s
+		LEFT OUTER JOIN products pro
+		ON
+		s.product_id = pro.id
+		<include refid="queryCondition" />
+
+	</select>
+</mapper>
